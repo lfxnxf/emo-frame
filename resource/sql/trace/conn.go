@@ -3,11 +3,11 @@ package trace
 import (
 	"context"
 	"database/sql/driver"
-	"time"
-
+	"github.com/lfxnxf/emo-frame/tpc/inf/go-tls"
 	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
 	opentracinglog "github.com/opentracing/opentracing-go/log"
+	"time"
 )
 
 var _ driver.Conn = (*tracedConn)(nil)
