@@ -1,0 +1,70 @@
+stages:
+  - test
+  # - lint
+  - check
+ 
+variables:
+  VGOPATH: $CI_PROJECT_DIR/.go
+before_script:
+  - mkdir -p .go
+ 
+go_cover:
+  image: centos:7.3
+  stage: test
+  before_script:
+    - source /build/dependency/init.sh $CI_PROJECT_NAME centos:7.3 false test
+    - export GOPATH=${VGOPATH}
+    - export GO_PROJECT_PATH="$GOPATH/src/git.inke.cn/tpc/inf"  #这里替换成你的项目所在的git目录
+    - rm -rf  "$GO_PROJECT_PATH/$CI_PROJECT_NAME"
+    - mkdir -p $GO_PROJECT_PATH
+    - ln -s $(pwd) $GO_PROJECT_PATH
+    - export GO_PROJECT_PATH="$GO_PROJECT_PATH/$CI_PROJECT_NAME"
+    - cd $GO_PROJECT_PATH
+  script:
+    - inkedep build
+    - sh coverage.sh
+  cache:
+    key: ${CI_COMMIT_REF_NAME}
+    paths:
+      - .go/src/
+  allow_failure: true
+  artifacts:
+    paths:
+      - cover.out
+  only:
+    - merge_requests
+    - master
+    - release
+    - develop
+    - test
+    - testqa
+    - feature/*
+    - hotfix/*
+    - release/*
+ 
+sonarqube-check:
+  stage: check
+  image:
+    name: sonarsource/sonar-scanner-cli:latest
+    entrypoint: [""]
+  variables:
+    SONAR_USER_HOME: "${CI_PROJECT_DIR}/.sonar"  # Defines the location of the analysis task cache
+    GIT_DEPTH: "0"  # Tells git to fetch all the branches of the project, required by the analysis task
+  cache:
+    key: ${CI_JOB_NAME}
+    paths:
+      - .sonar/cache
+  script:
+    - sonar-scanner
+  allow_failure: true
+  only:
+    - merge_requests
+    - master
+    - release
+    - develop
+    - test
+    - testqa
+    - feature/*
+    - hotfix/*
+    - release/*
+
