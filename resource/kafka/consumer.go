@@ -5,6 +5,7 @@ import (
 	"github.com/Shopify/sarama"
 	"github.com/lfxnxf/emo-frame/resource/kafka/core/config"
 	"github.com/lfxnxf/emo-frame/resource/kafka/core/consumergroup"
+	"github.com/lfxnxf/emo-frame/tpc/inf/go-tls"
 	"os"
 	"strings"
 	"sync"
