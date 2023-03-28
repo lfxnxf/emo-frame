@@ -101,11 +101,13 @@ func NewGroup(c GroupConfig) (*Group, error) {
 	g.replica = make([]*Slave, 0, len(c.Slaves))
 	g.total = 0
 	for _, slave := range c.Slaves {
+		// 有日志slave
 		hasLogC, err := openDB(c.Name, slave, 0, c.StatLevel, c.LogFormat, c.LogLevel)
 		if err != nil {
 			return nil, err
 		}
 
+		// 无日志slave
 		noLogC, err := openDB(c.Name, slave, 0, c.StatLevel, c.LogFormat, "error")
 		if err != nil {
 			return nil, err
