@@ -40,8 +40,8 @@ func TestNewGroup(t *testing.T) {
 func TestGroup_Master(t *testing.T) {
 	type fields struct {
 		name    string
-		master  *Client
-		replica []*Client
+		master  *Master
+		replica []*Slave
 		next    uint64
 		total   uint64
 	}
@@ -71,8 +71,8 @@ func TestGroup_Master(t *testing.T) {
 func TestGroup_Slave(t *testing.T) {
 	type fields struct {
 		name    string
-		master  *Client
-		replica []*Client
+		master  *Master
+		replica []*Slave
 		next    uint64
 		total   uint64
 	}
@@ -102,8 +102,8 @@ func TestGroup_Slave(t *testing.T) {
 func TestGroup_Instance(t *testing.T) {
 	type fields struct {
 		name    string
-		master  *Client
-		replica []*Client
+		master  *Master
+		replica []*Slave
 		next    uint64
 		total   uint64
 	}
