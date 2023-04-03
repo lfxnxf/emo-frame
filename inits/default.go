@@ -205,7 +205,7 @@ func (d *Default) initLogger() {
 	// 请求下游business日志
 	businessLog := logging.NewLogging(filepath.Join(d.logDir, "business.log"))
 	if rotateType == "day" {
-		sqlLog.SetRotateByDay()
+		businessLog.SetRotateByDay()
 	}
 
 	if logging.DefaultKit == nil {
