@@ -13,19 +13,22 @@ type Kit interface {
 	D() *Logger
 	// sql log
 	S() *Logger
+	// business log
+	B() *Logger
 }
 
 type kit struct {
-	a, e, i, d, s *Logger
+	a, e, i, d, s, b *Logger
 }
 
-func NewKit(a, e, i, d, s *Logger) Kit {
+func NewKit(a, e, i, d, s, b *Logger) Kit {
 	return kit{
 		a: a,
 		e: e,
 		i: i,
 		d: d,
 		s: s,
+		b: b,
 	}
 }
 
@@ -47,4 +50,8 @@ func (c kit) D() *Logger {
 
 func (c kit) S() *Logger {
 	return c.s
+}
+
+func (c kit) B() *Logger {
+	return c.b
 }

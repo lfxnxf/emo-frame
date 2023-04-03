@@ -202,8 +202,14 @@ func (d *Default) initLogger() {
 		sqlLog.SetRotateByDay()
 	}
 
+	// 请求下游business日志
+	businessLog := logging.NewLogging(filepath.Join(d.logDir, "business.log"))
+	if rotateType == "day" {
+		sqlLog.SetRotateByDay()
+	}
+
 	if logging.DefaultKit == nil {
-		logging.DefaultKit = logging.NewKit(accessLog, errorLog, infoLog, debugLog, sqlLog)
+		logging.DefaultKit = logging.NewKit(accessLog, errorLog, infoLog, debugLog, sqlLog, businessLog)
 	}
 
 	go logging.RemoveExpireLogs(d.logDir, d.config.Log.StorageDay)

@@ -8,9 +8,12 @@ import (
 	"fmt"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/lfxnxf/emo-frame/logging"
+	"github.com/lfxnxf/emo-frame/trace"
+	"github.com/lfxnxf/emo-frame/utils"
 	"go.uber.org/zap"
 	"io"
 	"io/ioutil"
+	"math"
 	"net"
 	"net/http"
 	"strings"
@@ -26,10 +29,13 @@ type client struct {
 	url             string
 	header          http.Header
 	body            io.Reader
+	reqBody         []byte
 	method          string
 	timeout         int64
 	err             error
-	respBody        *http.Response
+	respBody        []byte
+	statusCode      int
+	status          string
 	tlsClientConfig *tls.Config
 }
 
@@ -95,10 +101,13 @@ func (c *client) WithBody(body interface{}) *client {
 			return c
 		}
 		c.body = bytes.NewReader(buf)
+		c.reqBody = buf
 	case []byte:
 		c.body = bytes.NewReader(v)
+		c.reqBody = body.([]byte)
 	case string:
 		c.body = strings.NewReader(v)
+		c.reqBody = []byte(body.(string))
 	default:
 		buf, err := jsoniter.Marshal(body)
 		if err != nil {
@@ -106,6 +115,7 @@ func (c *client) WithBody(body interface{}) *client {
 			return c
 		}
 		c.body = bytes.NewReader(buf)
+		c.reqBody = buf
 	}
 	return c
 }
@@ -129,6 +139,8 @@ func (c *client) Response() *client {
 	if c.method == http.MethodGet {
 		c.body = nil
 	}
+
+	nowTime := time.Now()
 	req, err := http.NewRequest(c.method, c.url, c.body)
 	if err != nil {
 		c.err = err
@@ -140,7 +152,37 @@ func (c *client) Response() *client {
 		c.err = err
 		return c
 	}
-	c.respBody = resp
+
+	var traceId string
+	span, ok := c.ctx.Value(string(trace.CtxTraceSpanKey)).(trace.Span)
+	if ok {
+		traceId = span.Trace()
+	}
+
+	defer func() {
+		_ = resp.Body.Close()
+	}()
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		c.err = err
+	}
+
+	logItems := []interface{}{
+		"start", nowTime.Format(utils.TimeFormatYYYYMMDDHHmmSS),
+		"cost", math.Ceil(float64(time.Since(nowTime).Nanoseconds()) / 1e6),
+		"trace_id", traceId,
+		"req_method", c.method,
+		"req_uri", c.url,
+		"http_code", resp.StatusCode,
+		"req_body", string(c.reqBody),
+		"resp_body", string(body),
+	}
+	logging.DefaultKit.B().Debugw("http_client", logItems...)
+
+	c.respBody = body
+	c.statusCode = resp.StatusCode
+	c.status = resp.Status
 	return c
 }
 
@@ -161,12 +203,9 @@ func (c *client) ParseDataJson(data interface{}) error {
 	if c.err != nil {
 		return c.err
 	}
-	defer func() {
-		_ = c.respBody.Body.Close()
-	}()
 
-	if c.respBody.StatusCode != http.StatusOK {
-		return errors.New(c.respBody.Status)
+	if c.statusCode != http.StatusOK {
+		return errors.New(c.status)
 	}
 
 	// 空解析
@@ -174,30 +213,32 @@ func (c *client) ParseDataJson(data interface{}) error {
 		return nil
 	}
 
-	body, err := ioutil.ReadAll(c.respBody.Body)
-	if err != nil {
-		return err
-	}
-	return jsoniter.Unmarshal(body, data)
+	return jsoniter.Unmarshal(c.respBody, data)
 }
 
 func (c *client) ParseString(str *string) error {
 	if c.err != nil {
 		return c.err
 	}
-	defer func() {
-		_ = c.respBody.Body.Close()
-	}()
 
-	if c.respBody.StatusCode != http.StatusOK {
-		return errors.New(c.respBody.Status)
+	if c.statusCode != http.StatusOK {
+		return errors.New(c.status)
 	}
 
-	body, err := ioutil.ReadAll(c.respBody.Body)
-	if err != nil {
-		return err
-	}
-
-	*str = string(body)
+	*str = string(c.respBody)
 	return nil
+}
+
+// ParseJsonRest fixme 特殊处理http code不为200的业务body有返回
+func (c *client) ParseJsonRest(data interface{}) error {
+	if c.err != nil {
+		return c.err
+	}
+
+	// 空解析
+	if data == nil {
+		return nil
+	}
+
+	return jsoniter.Unmarshal(c.respBody, data)
 }
