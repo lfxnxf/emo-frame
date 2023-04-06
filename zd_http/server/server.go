@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"fmt"
+	"github.com/gin-contrib/pprof"
 	"github.com/gin-gonic/gin"
 	"github.com/lfxnxf/emo-frame/logging"
 	"github.com/lfxnxf/emo-frame/zd_http/http_ctx"
@@ -58,6 +59,8 @@ func NewHttpServer(cfg HttpServerConfig) *HttpServer {
 		engine: gin.New(),
 		cfg:    cfg,
 	}
+
+	pprof.Register(s.engine) // 性能
 
 	// 初始化中间件
 	s.initPublicMiddleware()

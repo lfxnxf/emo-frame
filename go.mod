@@ -7,6 +7,7 @@ require (
 	github.com/Shopify/sarama v1.38.1
 	github.com/cenk/backoff v2.2.1+incompatible
 	github.com/facebookgo/clock v0.0.0-20150410010913-600d898af40a
+	github.com/gin-contrib/pprof v1.4.0
 	github.com/gin-gonic/gin v1.9.0
 	github.com/go-playground/validator/v10 v10.12.0
 	github.com/go-redis/redis v6.15.9+incompatible
