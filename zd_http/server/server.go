@@ -261,7 +261,7 @@ func (s *HttpServer) Start() error {
 		Addr:           fmt.Sprintf(":%d", s.cfg.Port),
 		Handler:        s.engine,
 		ReadTimeout:    10 * time.Second,
-		WriteTimeout:   10 * time.Second,
+		WriteTimeout:   90 * time.Second,
 		MaxHeaderBytes: 1 << 20,
 	}
 	err := s.server.ListenAndServe()
